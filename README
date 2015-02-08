@@ -1,0 +1,32 @@
+This is about the world's worst IRC server.  It doesn't support like
+90% of the protocol; channel and user modes and away support are the
+largest missing features, but flood suppression would also be nice.
+Also I didn't read the RFC real carefully, so stuff is probably
+totally broken.
+
+I wrote it in less than a week, because I wanted to see what Go
+felt like and it seemed like a prototypical Go sort of task.
+
+The notion of one goroutine per client is pretty reasonable, and
+mostly works out pretty cleanly.  We were always going to need
+either per-channel mutexes or per-channel goroutines, and the Internet
+said mutexes were faster (not that I care, since nobody should
+ever use this code for anything).  Also, given what a clusterfuck
+the callback thing turned into, I guess goroutines are not so great
+for querying.
+
+Yeah, the callback thing.  So when one client wants to learn something
+about another, it has to send a message to the target's goroutine, and
+then the target sends a message back.  But either I have to write
+special code for each message (ugh), or I have to write callbacks
+taking []interface{}.  So, in other words, we're back to writing Perl
+here; a function takes an unknown number of unnamed arguments.  Or I
+guess given the double-callback thing, maybe we're in Node.js.  Either
+way, I miss generics.  Um, I guess in this case I miss varidic
+templates.
+
+Oh, and speaking of variadic, this is insane:  Let's say I have a
+function frob that takes (a string, rest string...).  I would like to pass
+it "foo", "bar", and morx, where morx is a slice of strings.  This
+seems like a totally reasonable thing to do, but I can't do it like
+frob("foo", "bar", morx...).  Why not?
